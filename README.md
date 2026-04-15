@@ -16,11 +16,22 @@ Open `index.html` in a browser.
 
 ## Workflow
 
-1. Enter distance to base of wall (metres, m)
-2. Capture base angle
-3. Capture top angle
-4. Calculate estimated height
+1. Enter distance to building (metres, m)
+2. Choose angle entry mode:
+   - **Manual entry**: type base and target/top angles directly
+   - **Automatic camera**: open camera live view, aim using overlay crosshairs + green horizon line, then store base and target
+3. Press **Calculate** to close camera view and show height from base in metres
+4. Use **Reset** to start from scratch
+5. Use **?** to show/hide the full maths breakdown for the current result
 
-Includes validation and confidence guidance.
+Includes validation for missing or invalid values.
 
-When using motion capture, use the on-screen scope reticle and keep the device screen vertical to stay level.
+## PWA install
+
+The app now includes:
+
+- `manifest.webmanifest`
+- `sw.js` service worker
+- app icons (`icon-192.png`, `icon-512.png`)
+
+When served over HTTPS (or localhost), it can be installed as a PWA.
