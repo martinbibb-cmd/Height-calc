@@ -180,6 +180,7 @@
   let topCaptured = false;
   let hasCalculation = false;
   let horizonContainerHeight = 0;
+  let horizonSyncAnimationFrame = 0;
 
   const HORIZON_EDGE_PADDING_PX = 18;
   // Map roughly ±30° of pitch to half the viewport height for intuitive horizon travel.
@@ -202,14 +203,23 @@
 
   function updateHorizonLinePosition() {
     if (!horizonLineEl || !cameraContainerEl) return;
-    if (!(horizonContainerHeight > 0)) refreshHorizonContainerHeight();
-    if (!(horizonContainerHeight > 0)) return;
+    if (horizonContainerHeight <= 0) refreshHorizonContainerHeight();
+    if (horizonContainerHeight <= 0) return;
 
     const halfHeight = horizonContainerHeight / 2;
     const maxOffset = Math.max(halfHeight - HORIZON_EDGE_PADDING_PX, 0);
     const pixelsPerDegree = halfHeight / HORIZON_REFERENCE_PITCH_DEGREES;
     const offset = Math.max(-maxOffset, Math.min(maxOffset, -livePitch * pixelsPerDegree));
     horizonLineEl.style.top = `calc(50% + ${offset.toFixed(2)}px)`;
+  }
+
+  function scheduleHorizonLineSync() {
+    if (horizonSyncAnimationFrame) return;
+    horizonSyncAnimationFrame = window.requestAnimationFrame(() => {
+      horizonSyncAnimationFrame = 0;
+      refreshHorizonContainerHeight();
+      updateHorizonLinePosition();
+    });
   }
 
   function getCameraPitch(event) {
@@ -337,14 +347,8 @@
 
   modeManualBtn.addEventListener("click", () => setMode("manual"));
   modeAutoBtn.addEventListener("click", () => setMode("automatic"));
-  window.addEventListener("resize", () => {
-    refreshHorizonContainerHeight();
-    updateHorizonLinePosition();
-  });
-  window.addEventListener("orientationchange", () => {
-    refreshHorizonContainerHeight();
-    updateHorizonLinePosition();
-  });
+  window.addEventListener("resize", scheduleHorizonLineSync);
+  window.addEventListener("orientationchange", scheduleHorizonLineSync);
 
   function resetAll() {
     distanceEl.value = "";
