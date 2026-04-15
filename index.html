@@ -184,6 +184,7 @@
     if (!Number.isFinite(beta)) return NaN;
 
     // screen.orientation.angle is the modern standard; window.orientation is kept only as a deprecated fallback.
+    // If neither API is available, orientation defaults to 0 (portrait assumption).
     const orientationAngle = typeof screen.orientation?.angle === "number"
       ? screen.orientation.angle
       : (typeof window.orientation === "number" ? window.orientation : 0);
@@ -241,14 +242,18 @@
   }
 
   async function startAutomaticCapture() {
+    const switchModeButtonsToManual = () => {
+      captureMode = "manual";
+      modeManualBtn.className = "btn-primary";
+      modeAutoBtn.className = "btn-secondary";
+    };
+
     try {
       const motionReady = await enableMotionCapture();
       if (!motionReady) return;
       if (!navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== "function") {
         motionStatusEl.textContent = "Camera capture is not supported by this browser. Use manual entry.";
-        captureMode = "manual";
-        modeManualBtn.className = "btn-primary";
-        modeAutoBtn.className = "btn-secondary";
+        switchModeButtonsToManual();
         return;
       }
       stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
@@ -265,9 +270,7 @@
       } else {
         motionStatusEl.textContent = "Could not start automatic capture. Use manual entry.";
       }
-      captureMode = "manual";
-      modeManualBtn.className = "btn-primary";
-      modeAutoBtn.className = "btn-secondary";
+      switchModeButtonsToManual();
     }
   }
 
@@ -322,10 +325,10 @@
       "H = d * (tan(theta_top) - tan(theta_base))",
       "",
       `d = ${distance.toFixed(2)} m`,
-      `θbase = ${base.toFixed(2)}° (${toRadians(base).toFixed(4)} rad)`,
-      `θtop = ${top.toFixed(2)}° (${toRadians(top).toFixed(4)} rad)`,
-      `tan(θbase) = ${tanBase.toFixed(6)}`,
-      `tan(θtop) = ${tanTop.toFixed(6)}`,
+      `theta_base = ${base.toFixed(2)}° (${toRadians(base).toFixed(4)} rad)`,
+      `theta_top = ${top.toFixed(2)}° (${toRadians(top).toFixed(4)} rad)`,
+      `tan(theta_base) = ${tanBase.toFixed(6)}`,
+      `tan(theta_top) = ${tanTop.toFixed(6)}`,
       "",
       `H = ${distance.toFixed(2)} * (${tanTop.toFixed(6)} - ${tanBase.toFixed(6)})`,
       `H = ${height.toFixed(2)} m`
@@ -376,6 +379,9 @@
   helpBtn.addEventListener("click", () => {
     if (!hasCalculation) {
       mathBreakdownEl.textContent = "Press Calculate to generate the full math breakdown.";
+      mathBreakdownEl.classList.remove("hidden");
+      document.getElementById("mathBreakdownTitle").classList.remove("hidden");
+      return;
     }
     mathBreakdownEl.classList.toggle("hidden");
     document.getElementById("mathBreakdownTitle").classList.toggle("hidden");

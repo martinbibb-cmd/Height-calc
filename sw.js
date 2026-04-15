@@ -30,7 +30,7 @@ self.addEventListener("fetch", (event) => {
       if (cached) return cached;
       return fetch(event.request).catch((error) => {
         console.warn("Fetch failed:", error);
-        return new Response("This resource is not available offline. Please check your connection and try again.", {
+        return new Response(`Resource unavailable: ${event.request.url}. Please check your connection and try again.`, {
           status: 503,
           statusText: "Service Unavailable",
           headers: { "Content-Type": "text/plain; charset=utf-8" }
