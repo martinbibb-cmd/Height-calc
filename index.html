@@ -113,7 +113,7 @@
 
     const angleGap = top - base;
     if (Number.isFinite(angleGap) && angleGap > 0 && angleGap < 2) warnings.push("Very small angle separation detected; repeat measurement for better accuracy.");
-    warnings.push("Laser line-of-sight distance can reduce accuracy unless corrected to horizontal distance.");
+    warnings.push("Calculation assumes entered distance is horizontal; correct any line-of-sight laser reading before entry.");
 
     notesEl.innerHTML = "";
     warnings.forEach((warning) => {
@@ -122,7 +122,12 @@
       notesEl.appendChild(li);
     });
 
-    if (warnings.some((w) => w !== "Laser line-of-sight distance can reduce accuracy unless corrected to horizontal distance.")) {
+    const hasBlockingValidationError = !(distance > 0)
+      || !Number.isFinite(base)
+      || !Number.isFinite(top)
+      || top <= base;
+
+    if (hasBlockingValidationError) {
       heightResultEl.textContent = "Estimated height: —";
       confidenceResultEl.textContent = "Confidence: —";
       return;

@@ -12,7 +12,7 @@ Core formula:
 
 ## Run
 
-Open `/home/runner/work/Height-calc/Height-calc/index.html` in a browser.
+Open `index.html` in a browser.
 
 ## Workflow
 
