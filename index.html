@@ -76,7 +76,7 @@
     <p class="muted">Aim the device scope reticle at the wall base and top, then capture each angle. Manual edit remains available.</p>
     <button id="enableMotion" class="btn-secondary" type="button">Enable angle capture</button>
     <p class="muted" id="motionStatus">Motion capture not enabled yet. You can still type angles manually.</p>
-    <div class="scope" id="scopeReticle" aria-label="Camera scope reticle">
+    <div class="scope" id="scopeReticle" aria-hidden="true">
       <div class="scope-ring"></div>
       <div class="scope-line-v"></div>
       <div class="scope-line-h"></div>
@@ -147,9 +147,9 @@
   }
 
   function handleDeviceOrientation(event) {
-    if (event.beta === null || event.beta === undefined) return;
+    if (event.beta == null) return;
     updateLivePitch(event.beta);
-    if (event.gamma !== null && event.gamma !== undefined) updateScopeLevel(event.gamma);
+    if (event.gamma != null) updateScopeLevel(event.gamma);
   }
 
   async function enableMotionCapture() {
@@ -168,6 +168,7 @@
 
     window.addEventListener("deviceorientation", handleDeviceOrientation);
     motionStatusEl.textContent = "Motion capture enabled.";
+    scopeLevelEl.textContent = "Motion enabled. Hold device vertically to level the scope.";
   }
 
   document.getElementById("enableMotion").addEventListener("click", () => {
