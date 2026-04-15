@@ -16,7 +16,7 @@ Open `index.html` in a browser.
 
 ## Workflow
 
-1. Enter distance to base of wall (metres)
+1. Enter distance to base of wall (metres, m)
 2. Capture base angle
 3. Capture top angle
 4. Calculate estimated height

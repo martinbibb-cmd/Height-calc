@@ -37,6 +37,8 @@
   <section class="card">
     <h2>2) Capture base and top angles</h2>
     <p class="muted">Aim the device crosshair at the wall base and top, then capture each angle. Manual edit remains available.</p>
+    <button id="enableMotion" class="btn-secondary" type="button">Enable angle capture</button>
+    <p class="muted" id="motionStatus">Motion capture not enabled yet. You can still type angles manually.</p>
     <div class="crosshair">＋</div>
     <p><strong>Live pitch:</strong> <span id="livePitch">0.00°</span></p>
     <div class="row">
@@ -67,6 +69,7 @@
   const baseAngleEl = document.getElementById("baseAngle");
   const topAngleEl = document.getElementById("topAngle");
   const distanceEl = document.getElementById("distance");
+  const motionStatusEl = document.getElementById("motionStatus");
   const heightResultEl = document.getElementById("heightResult");
   const confidenceResultEl = document.getElementById("confidenceResult");
   const notesEl = document.getElementById("notes");
@@ -82,9 +85,33 @@
     livePitchEl.textContent = `${value.toFixed(2)}°`;
   }
 
-  window.addEventListener("deviceorientation", (event) => {
+  function handleDeviceOrientation(event) {
     if (event.beta === null || event.beta === undefined) return;
     updateLivePitch(event.beta);
+  }
+
+  async function enableMotionCapture() {
+    if (typeof window.DeviceOrientationEvent === "undefined") {
+      motionStatusEl.textContent = "Device orientation is not supported on this device/browser. Enter angles manually.";
+      return;
+    }
+
+    if (typeof DeviceOrientationEvent.requestPermission === "function") {
+      const permission = await DeviceOrientationEvent.requestPermission();
+      if (permission !== "granted") {
+        motionStatusEl.textContent = "Motion permission denied. Enter angles manually.";
+        return;
+      }
+    }
+
+    window.addEventListener("deviceorientation", handleDeviceOrientation);
+    motionStatusEl.textContent = "Motion capture enabled.";
+  }
+
+  document.getElementById("enableMotion").addEventListener("click", () => {
+    enableMotionCapture().catch(() => {
+      motionStatusEl.textContent = "Could not enable motion capture. Enter angles manually.";
+    });
   });
 
   document.getElementById("captureBase").addEventListener("click", () => {
@@ -104,6 +131,8 @@
   }
 
   function confidenceFor(distance, angleGap) {
+    if (distance > 25) return "Low";
+    if (distance > 15 && angleGap >= HIGH_CONFIDENCE_ANGLE_GAP) return "Medium";
     if (distance > 0 && angleGap >= HIGH_CONFIDENCE_ANGLE_GAP) return "High";
     if (distance > 0 && angleGap >= MEDIUM_CONFIDENCE_ANGLE_GAP) return "Medium";
     return "Low";
