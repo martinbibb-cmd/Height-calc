@@ -131,17 +131,13 @@
   }
 
   function confidenceFor(distance, angleGap) {
-    if (distance > 25) {
-      return "Low";
-    } else if (distance > 15 && angleGap >= HIGH_CONFIDENCE_ANGLE_GAP) {
-      return "Medium";
-    } else if (distance > 0 && angleGap >= HIGH_CONFIDENCE_ANGLE_GAP) {
-      return "High";
-    } else if (distance > 0 && angleGap >= MEDIUM_CONFIDENCE_ANGLE_GAP) {
-      return "Medium";
-    } else {
-      return "Low";
-    }
+    if (!(distance > 0)) return "Low";
+    let confidence = "Low";
+    if (angleGap >= HIGH_CONFIDENCE_ANGLE_GAP) confidence = "High";
+    else if (angleGap >= MEDIUM_CONFIDENCE_ANGLE_GAP) confidence = "Medium";
+    if (distance > 25) return "Low";
+    if (distance > 15 && confidence === "High") return "Medium";
+    return confidence;
   }
 
   document.getElementById("calculate").addEventListener("click", () => {
@@ -155,7 +151,7 @@
     if (Number.isFinite(base) && Number.isFinite(top) && top <= base) warnings.push("Top angle must be greater than base angle.");
 
     const angleGap = top - base;
-    if (Number.isFinite(angleGap) && angleGap > 0 && angleGap < MIN_RECOMMENDED_ANGLE_GAP) warnings.push("Very small angle separation detected; repeat measurement for better accuracy.");
+    if (Number.isFinite(angleGap) && angleGap < MIN_RECOMMENDED_ANGLE_GAP) warnings.push("Very small angle separation detected; repeat measurement for better accuracy.");
     notesEl.innerHTML = "";
     warnings.forEach((warning) => {
       const li = document.createElement("li");
