@@ -22,3 +22,5 @@ Open `index.html` in a browser.
 4. Calculate estimated height
 
 Includes validation and confidence guidance.
+
+When using motion capture, use the on-screen scope reticle and keep the device screen vertical to stay level.
