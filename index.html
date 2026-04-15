@@ -236,6 +236,8 @@
     const normalized = ((orientationAngle % 360) + 360) % 360;
     if (normalized === 90) return gamma;
     if (normalized === 270) return -gamma;
+    // In portrait, beta is typically ~90° when the camera is level with the horizon,
+    // so subtract 90° to make 0° represent "level" for horizon centering.
     if (normalized === 180) return -beta - 90;
     return beta - 90;
   }
