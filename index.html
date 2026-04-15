@@ -166,6 +166,7 @@
   let motionEnabled = false;
   let baseCaptured = false;
   let topCaptured = false;
+  let hasCalculation = false;
 
   function updateLivePitch(value) {
     if (!Number.isFinite(value)) return;
@@ -182,6 +183,7 @@
     const gamma = Number(event.gamma);
     if (!Number.isFinite(beta)) return NaN;
 
+    // window.orientation is deprecated, but retained here as a fallback for older mobile browsers.
     const orientationAngle = typeof screen.orientation?.angle === "number"
       ? screen.orientation.angle
       : (typeof window.orientation === "number" ? window.orientation : 0);
@@ -246,8 +248,14 @@
       cameraViewEl.srcObject = stream;
       cameraContainerEl.classList.remove("hidden");
       motionStatusEl.textContent = "Automatic mode active. Aim and store base/target angles.";
-    } catch {
-      motionStatusEl.textContent = "Could not open camera/motion. Use manual entry.";
+    } catch (error) {
+      if (error && error.name === "NotAllowedError") {
+        motionStatusEl.textContent = "Camera or motion permission denied. Use manual entry.";
+      } else if (error && error.name === "NotFoundError") {
+        motionStatusEl.textContent = "No camera found on this device. Use manual entry.";
+      } else {
+        motionStatusEl.textContent = "Could not start automatic capture. Use manual entry.";
+      }
       captureMode = "manual";
       modeManualBtn.className = "btn-primary";
       modeAutoBtn.className = "btn-secondary";
@@ -293,6 +301,7 @@
     notesEl.innerHTML = "";
     mathBreakdownEl.classList.add("hidden");
     mathBreakdownEl.textContent = "";
+    hasCalculation = false;
     setMode("manual");
   }
 
@@ -340,12 +349,14 @@
 
     if (hasBlockingValidationError) {
       heightResultEl.textContent = "Height from base: —";
+      hasCalculation = false;
       return;
     }
 
     const height = calculateHeight(distance, base, top);
     heightResultEl.textContent = `Height from base: ${height.toFixed(2)} m`;
     renderMathBreakdown(distance, base, top, height);
+    hasCalculation = true;
     if (captureMode === "automatic") {
       stopAutomaticCapture();
       motionStatusEl.textContent = "Calculation complete. Camera closed.";
@@ -354,7 +365,7 @@
 
   document.getElementById("reset").addEventListener("click", resetAll);
   helpBtn.addEventListener("click", () => {
-    if (!mathBreakdownEl.textContent) {
+    if (!hasCalculation) {
       mathBreakdownEl.textContent = "Press Calculate to generate the full maths breakdown.";
     }
     mathBreakdownEl.classList.toggle("hidden");

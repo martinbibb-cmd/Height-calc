@@ -28,11 +28,14 @@ self.addEventListener("fetch", (event) => {
   event.respondWith(
     caches.match(event.request).then((cached) => {
       if (cached) return cached;
-      return fetch(event.request).catch(() => new Response("Offline. Resource unavailable.", {
-        status: 503,
-        statusText: "Service Unavailable",
-        headers: { "Content-Type": "text/plain; charset=utf-8" }
-      }));
+      return fetch(event.request).catch((error) => {
+        console.warn("Fetch failed:", error);
+        return new Response("Unable to load resource.", {
+          status: 503,
+          statusText: "Service Unavailable",
+          headers: { "Content-Type": "text/plain; charset=utf-8" }
+        });
+      });
     })
   );
 });
