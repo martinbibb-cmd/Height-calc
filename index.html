@@ -131,11 +131,17 @@
   }
 
   function confidenceFor(distance, angleGap) {
-    if (distance > 25) return "Low";
-    if (distance > 15 && angleGap >= HIGH_CONFIDENCE_ANGLE_GAP) return "Medium";
-    if (distance > 0 && angleGap >= HIGH_CONFIDENCE_ANGLE_GAP) return "High";
-    if (distance > 0 && angleGap >= MEDIUM_CONFIDENCE_ANGLE_GAP) return "Medium";
-    return "Low";
+    if (distance > 25) {
+      return "Low";
+    } else if (distance > 15 && angleGap >= HIGH_CONFIDENCE_ANGLE_GAP) {
+      return "Medium";
+    } else if (distance > 0 && angleGap >= HIGH_CONFIDENCE_ANGLE_GAP) {
+      return "High";
+    } else if (distance > 0 && angleGap >= MEDIUM_CONFIDENCE_ANGLE_GAP) {
+      return "Medium";
+    } else {
+      return "Low";
+    }
   }
 
   document.getElementById("calculate").addEventListener("click", () => {
@@ -145,7 +151,7 @@
     const warnings = [];
 
     if (!(distance > 0)) warnings.push("Distance must be greater than 0.");
-    if (!Number.isFinite(base) || !Number.isFinite(top)) warnings.push("Base and top angles are required.");
+    if (!Number.isFinite(base) || !Number.isFinite(top)) warnings.push("Please enter valid base and top angles.");
     if (Number.isFinite(base) && Number.isFinite(top) && top <= base) warnings.push("Top angle must be greater than base angle.");
 
     const angleGap = top - base;
@@ -170,7 +176,7 @@
 
     const height = calculateHeight(distance, base, top);
     heightResultEl.textContent = `Estimated height: ${height.toFixed(2)} m`;
-    confidenceResultEl.textContent = `Confidence: ${confidenceFor(distance, angleGap)} (${distance.toFixed(2)}m, base ${base.toFixed(2)}°, top ${top.toFixed(2)}°)`;
+    confidenceResultEl.textContent = `Confidence: ${confidenceFor(distance, angleGap)} (Distance: ${distance.toFixed(2)} m | Base: ${base.toFixed(2)}° | Top: ${top.toFixed(2)}°)`;
   });
 </script>
 </body>
