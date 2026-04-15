@@ -16,7 +16,44 @@
     .btn-primary { background: #22c55e; color: #06280e; }
     .btn-secondary { background: #60a5fa; color: #0b1d3b; }
     .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .crosshair { height: 120px; border-radius: 12px; border: 1px dashed #6b7280; display: grid; place-items: center; font-size: 24px; margin-top: 10px; }
+    .scope {
+      position: relative;
+      height: 180px;
+      border-radius: 12px;
+      border: 1px solid #4b5563;
+      margin-top: 10px;
+      background: radial-gradient(circle at center, #111827 0%, #0b1220 70%, #070b14 100%);
+      overflow: hidden;
+    }
+    .scope-ring {
+      position: absolute;
+      inset: 16px;
+      border: 2px solid #9ca3af;
+      border-radius: 999px;
+      opacity: 0.9;
+    }
+    .scope-line-v,
+    .scope-line-h {
+      position: absolute;
+      background: #9ca3af;
+      opacity: 0.9;
+    }
+    .scope-line-v { width: 2px; top: 18px; bottom: 18px; left: 50%; transform: translateX(-50%); }
+    .scope-line-h { height: 2px; left: 18px; right: 18px; top: 50%; transform: translateY(-50%); }
+    .scope-dot {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: #f3f4f6;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+    .scope.scope-level .scope-ring { border-color: #22c55e; }
+    .scope.scope-level .scope-line-v,
+    .scope.scope-level .scope-line-h,
+    .scope.scope-level .scope-dot { background-color: #22c55e; }
     .result { font-size: 1.25rem; font-weight: 700; }
     .muted { color: #9ca3af; }
     ul { margin-bottom: 0; }
@@ -39,7 +76,13 @@
     <p class="muted">Aim the device crosshair at the wall base and top, then capture each angle. Manual edit remains available.</p>
     <button id="enableMotion" class="btn-secondary" type="button">Enable angle capture</button>
     <p class="muted" id="motionStatus">Motion capture not enabled yet. You can still type angles manually.</p>
-    <div class="crosshair">＋</div>
+    <div class="scope" id="scopeReticle" aria-label="Camera scope reticle">
+      <div class="scope-ring"></div>
+      <div class="scope-line-v"></div>
+      <div class="scope-line-h"></div>
+      <div class="scope-dot"></div>
+    </div>
+    <p><strong>Scope level:</strong> <span id="scopeLevel">Waiting for motion capture...</span></p>
     <p><strong>Live pitch:</strong> <span id="livePitch">0.00°</span></p>
     <div class="row">
       <div>
@@ -73,12 +116,15 @@
   const heightResultEl = document.getElementById("heightResult");
   const confidenceResultEl = document.getElementById("confidenceResult");
   const notesEl = document.getElementById("notes");
+  const scopeLevelEl = document.getElementById("scopeLevel");
+  const scopeReticleEl = document.getElementById("scopeReticle");
 
   let livePitch = 0;
   const HIGH_CONFIDENCE_ANGLE_GAP = 10;
   const MEDIUM_CONFIDENCE_ANGLE_GAP = 5;
   const MIN_RECOMMENDED_ANGLE_GAP = 2;
   const SMALL_ANGLE_WARNING = "Very small angle separation detected; repeat measurement for better accuracy.";
+  const LEVEL_ROLL_TOLERANCE = 2;
 
   function updateLivePitch(value) {
     if (!Number.isFinite(value)) return;
@@ -86,9 +132,25 @@
     livePitchEl.textContent = `${value.toFixed(2)}°`;
   }
 
+  function updateScopeLevel(value) {
+    if (!Number.isFinite(value)) return;
+    const rollAbs = Math.abs(value);
+    const isLevel = rollAbs <= LEVEL_ROLL_TOLERANCE;
+    scopeReticleEl.classList.toggle("scope-level", isLevel);
+
+    if (isLevel) {
+      scopeLevelEl.textContent = `Level (vertical) • roll ${value.toFixed(2)}°`;
+      return;
+    }
+
+    const direction = value > 0 ? "right" : "left";
+    scopeLevelEl.textContent = `Tilt ${direction} by ${rollAbs.toFixed(2)}° (keep screen vertical for level)`;
+  }
+
   function handleDeviceOrientation(event) {
     if (event.beta === null || event.beta === undefined) return;
     updateLivePitch(event.beta);
+    if (event.gamma !== null && event.gamma !== undefined) updateScopeLevel(event.gamma);
   }
 
   async function enableMotionCapture() {
