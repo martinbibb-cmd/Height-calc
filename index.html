@@ -221,9 +221,9 @@
     const maxOffset = Math.max(halfHeight - HORIZON_EDGE_PADDING_PX, 0);
     const pixelsPerDegree = halfHeight / HORIZON_REFERENCE_PITCH_DEGREES;
     const offset = Math.max(-maxOffset, Math.min(maxOffset, -livePitch * pixelsPerDegree));
-    const clampedRoll = Math.max(-MAX_HORIZON_ROLL_DEGREES, Math.min(MAX_HORIZON_ROLL_DEGREES, liveRoll));
+    const clampedLiveRoll = Math.max(-MAX_HORIZON_ROLL_DEGREES, Math.min(MAX_HORIZON_ROLL_DEGREES, liveRoll));
     horizonLineEl.style.top = `calc(50% + ${offset.toFixed(2)}px)`;
-    horizonLineEl.style.setProperty("--horizon-roll-deg", `${(-clampedRoll).toFixed(2)}deg`);
+    horizonLineEl.style.setProperty("--horizon-roll-deg", `${(-clampedLiveRoll).toFixed(2)}deg`);
   }
 
   function scheduleHorizonLineSync() {
@@ -259,13 +259,14 @@
     const beta = Number(event.beta);
     const gamma = Number(event.gamma);
     if (!Number.isFinite(gamma)) return NaN;
+    if (!Number.isFinite(beta)) return NaN;
 
     const orientationAngle = typeof screen.orientation?.angle === "number"
       ? screen.orientation.angle
       : (typeof window.orientation === "number" ? window.orientation : 0);
     const normalized = ((orientationAngle % 360) + 360) % 360;
-    if (normalized === ORIENTATION_QUARTER_TURN_DEGREES) return Number.isFinite(beta) ? (beta - ORIENTATION_QUARTER_TURN_DEGREES) : NaN;
-    if (normalized === ORIENTATION_THREE_QUARTER_TURN_DEGREES) return Number.isFinite(beta) ? (-beta - ORIENTATION_QUARTER_TURN_DEGREES) : NaN;
+    if (normalized === ORIENTATION_QUARTER_TURN_DEGREES) return beta - ORIENTATION_QUARTER_TURN_DEGREES;
+    if (normalized === ORIENTATION_THREE_QUARTER_TURN_DEGREES) return -beta - ORIENTATION_QUARTER_TURN_DEGREES;
     if (normalized === ORIENTATION_HALF_TURN_DEGREES) return -gamma;
     return gamma;
   }
