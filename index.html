@@ -102,6 +102,7 @@
     .camera-controls button { margin-top: 0; }
     .capture-btn { background: #22c55e; color: #06280e; }
     .capture-btn.stored { background: #ef4444; color: #250606; }
+    .camera-calc-btn { grid-column: span 2; background: #22c55e; color: #06280e; }
     .hidden { display: none; }
     .result { font-size: 1.25rem; font-weight: 700; }
     .muted { color: #9ca3af; }
@@ -153,6 +154,7 @@
       <div class="camera-controls">
         <button id="captureBase" class="capture-btn" type="button">Store base</button>
         <button id="captureTop" class="capture-btn" type="button">Store target</button>
+        <button id="cameraCalculate" class="camera-calc-btn" type="button">Calculate</button>
       </div>
     </div>
   </section>
@@ -188,9 +190,10 @@
   const captureTopBtn = document.getElementById("captureTop");
   const modeManualBtn = document.getElementById("modeManual");
   const modeAutoBtn = document.getElementById("modeAuto");
+  const cameraCalculateBtn = document.getElementById("cameraCalculate");
   const helpBtn = document.getElementById("help");
-  const mathBreakdownTitleEl = document.getElementById("mathBreakdownTitle");
 
+  const mathBreakdownTitleEl = document.getElementById("mathBreakdownTitle");
   let livePitch = 0;
   let liveRoll = 0;
   let captureMode = "manual";
@@ -411,7 +414,7 @@
     ].join("\n");
   }
 
-  document.getElementById("calculate").addEventListener("click", () => {
+  function doCalculate() {
     const distance = Number(distanceEl.value);
     const base = Number(baseAngleEl.value);
     const top = Number(topAngleEl.value);
@@ -449,7 +452,10 @@
       stopAutomaticCapture();
       motionStatusEl.textContent = "Calculation complete. Camera closed.";
     }
-  });
+  }
+
+  document.getElementById("calculate").addEventListener("click", doCalculate);
+  cameraCalculateBtn.addEventListener("click", doCalculate);
 
   document.getElementById("reset").addEventListener("click", resetAll);
   helpBtn.addEventListener("click", () => {
