@@ -173,6 +173,7 @@
   const horizonLineEl = document.getElementById("horizonLine");
 
   let livePitch = 0;
+  let liveRoll = 0;
   let captureMode = "manual";
   let stream = null;
   let motionEnabled = false;
@@ -185,11 +186,18 @@
   const HORIZON_EDGE_PADDING_PX = 18;
   // Map roughly ±30° of pitch to half the viewport height for intuitive horizon travel.
   const HORIZON_REFERENCE_PITCH_DEGREES = 30;
+  const MAX_HORIZON_ROLL_DEGREES = 45;
 
   function updateLivePitch(value) {
     if (!Number.isFinite(value)) return;
     livePitch = value;
     livePitchEl.textContent = `${value.toFixed(2)}°`;
+    updateHorizonLinePosition();
+  }
+
+  function updateLiveRoll(value) {
+    if (!Number.isFinite(value)) return;
+    liveRoll = value;
     updateHorizonLinePosition();
   }
 
@@ -210,7 +218,9 @@
     const maxOffset = Math.max(halfHeight - HORIZON_EDGE_PADDING_PX, 0);
     const pixelsPerDegree = halfHeight / HORIZON_REFERENCE_PITCH_DEGREES;
     const offset = Math.max(-maxOffset, Math.min(maxOffset, -livePitch * pixelsPerDegree));
+    const clampedRoll = Math.max(-MAX_HORIZON_ROLL_DEGREES, Math.min(MAX_HORIZON_ROLL_DEGREES, liveRoll));
     horizonLineEl.style.top = `calc(50% + ${offset.toFixed(2)}px)`;
+    horizonLineEl.style.transform = `translateY(-50%) rotate(${(-clampedRoll).toFixed(2)}deg)`;
   }
 
   function scheduleHorizonLineSync() {
@@ -242,10 +252,26 @@
     return beta - 90;
   }
 
+  function getCameraRoll(event) {
+    const beta = Number(event.beta);
+    const gamma = Number(event.gamma);
+    if (!Number.isFinite(gamma)) return NaN;
+
+    const orientationAngle = typeof screen.orientation?.angle === "number"
+      ? screen.orientation.angle
+      : (typeof window.orientation === "number" ? window.orientation : 0);
+    const normalized = ((orientationAngle % 360) + 360) % 360;
+    if (normalized === 90) return Number.isFinite(beta) ? (beta - 90) : NaN;
+    if (normalized === 270) return Number.isFinite(beta) ? (-beta - 90) : NaN;
+    if (normalized === 180) return -gamma;
+    return gamma;
+  }
+
   function handleDeviceOrientation(event) {
     const pitch = getCameraPitch(event);
-    if (!Number.isFinite(pitch)) return;
-    updateLivePitch(pitch);
+    const roll = getCameraRoll(event);
+    if (Number.isFinite(pitch)) updateLivePitch(pitch);
+    if (Number.isFinite(roll)) updateLiveRoll(roll);
   }
 
   async function enableMotionCapture() {
@@ -332,6 +358,7 @@
     if (cameraViewEl.srcObject) cameraViewEl.srcObject = null;
     cameraContainerEl.classList.remove("fullscreen");
     cameraContainerEl.classList.add("hidden");
+    liveRoll = 0;
     horizonContainerHeight = 0;
   }
 
@@ -357,6 +384,7 @@
     baseAngleEl.value = "";
     topAngleEl.value = "";
     livePitch = 0;
+    liveRoll = 0;
     livePitchEl.textContent = "0.00°";
     updateHorizonLinePosition();
     baseCaptured = false;
