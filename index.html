@@ -159,6 +159,7 @@
   const modeManualBtn = document.getElementById("modeManual");
   const modeAutoBtn = document.getElementById("modeAuto");
   const helpBtn = document.getElementById("help");
+  const mathBreakdownTitleEl = document.getElementById("mathBreakdownTitle");
 
   let livePitch = 0;
   let captureMode = "manual";
@@ -183,7 +184,8 @@
     const gamma = Number(event.gamma);
     if (!Number.isFinite(beta)) return NaN;
 
-    // screen.orientation.angle is the modern standard; window.orientation is kept only as a deprecated fallback.
+    // screen.orientation.angle is the modern standard (not universal on older browsers like legacy Safari).
+    // window.orientation is kept only as a deprecated fallback.
     // If neither API is available, orientation defaults to 0 (portrait assumption).
     const orientationAngle = typeof screen.orientation?.angle === "number"
       ? screen.orientation.angle
@@ -275,11 +277,11 @@
   }
 
   function stopAutomaticCapture() {
-    if (cameraViewEl.srcObject) cameraViewEl.srcObject = null;
     if (stream) {
       stream.getTracks().forEach((track) => track.stop());
       stream = null;
     }
+    if (cameraViewEl.srcObject) cameraViewEl.srcObject = null;
     cameraContainerEl.classList.add("hidden");
   }
 
@@ -299,7 +301,6 @@
   modeAutoBtn.addEventListener("click", () => setMode("automatic"));
 
   function resetAll() {
-    stopAutomaticCapture();
     distanceEl.value = "";
     baseAngleEl.value = "";
     topAngleEl.value = "";
@@ -380,11 +381,11 @@
     if (!hasCalculation) {
       mathBreakdownEl.textContent = "Press Calculate to generate the full math breakdown.";
       mathBreakdownEl.classList.remove("hidden");
-      document.getElementById("mathBreakdownTitle").classList.remove("hidden");
+      mathBreakdownTitleEl.classList.remove("hidden");
       return;
     }
     mathBreakdownEl.classList.toggle("hidden");
-    document.getElementById("mathBreakdownTitle").classList.toggle("hidden");
+    mathBreakdownTitleEl.classList.toggle("hidden");
   });
 
   if ("serviceWorker" in navigator) {
