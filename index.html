@@ -82,7 +82,7 @@
       <div class="scope-line-h"></div>
       <div class="scope-dot"></div>
     </div>
-    <p><strong>Scope level:</strong> <span id="scopeLevel">Waiting for motion capture...</span></p>
+    <p><strong>Scope level:</strong> <span id="scopeLevel" aria-live="polite">Waiting for motion capture...</span></p>
     <p><strong>Live pitch:</strong> <span id="livePitch">0.00°</span></p>
     <div class="row">
       <div>
@@ -139,7 +139,7 @@
     scopeReticleEl.classList.toggle("scope-level", isLevel);
 
     if (isLevel) {
-      scopeLevelEl.textContent = `Level (device upright) - roll ${value.toFixed(2)}°`;
+      scopeLevelEl.textContent = `Level (device vertical) - roll ${value.toFixed(2)}°`;
       return;
     }
 
