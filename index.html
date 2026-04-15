@@ -139,11 +139,11 @@
     scopeReticleEl.classList.toggle("scope-level", isLevel);
 
     if (isLevel) {
-      scopeLevelEl.textContent = `Level (vertical) • roll ${value.toFixed(2)}°`;
+      scopeLevelEl.textContent = `Level (vertical) - roll ${value.toFixed(2)}°`;
       return;
     }
 
-    scopeLevelEl.textContent = `Off-level by ${rollAbs.toFixed(2)}° (keep screen vertical for level)`;
+    scopeLevelEl.textContent = `Off-level by ${rollAbs.toFixed(2)}° (hold device vertically)`;
   }
 
   function handleDeviceOrientation(event) {
