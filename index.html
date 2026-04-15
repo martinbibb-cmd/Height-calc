@@ -138,7 +138,7 @@
     </div>
     <p class="result" id="heightResult">Height from base: —</p>
     <h3 id="mathBreakdownTitle" class="hidden">Math breakdown</h3>
-    <p id="mathBreakdown" class="hidden" role="region" aria-labelledby="mathBreakdownTitle" aria-live="polite" aria-label="Detailed height calculation steps in plain language"></p>
+    <p id="mathBreakdown" class="hidden" role="region" aria-labelledby="mathBreakdownTitle" aria-live="polite"></p>
     <ul id="notes"></ul>
   </section>
 </main>
@@ -183,7 +183,7 @@
     const gamma = Number(event.gamma);
     if (!Number.isFinite(beta)) return NaN;
 
-    // window.orientation is deprecated, but retained here as a fallback for older mobile browsers.
+    // screen.orientation.angle is the modern standard; window.orientation is kept only as a deprecated fallback.
     const orientationAngle = typeof screen.orientation?.angle === "number"
       ? screen.orientation.angle
       : (typeof window.orientation === "number" ? window.orientation : 0);
@@ -244,6 +244,13 @@
     try {
       const motionReady = await enableMotionCapture();
       if (!motionReady) return;
+      if (!navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== "function") {
+        motionStatusEl.textContent = "Camera capture is not supported by this browser. Use manual entry.";
+        captureMode = "manual";
+        modeManualBtn.className = "btn-primary";
+        modeAutoBtn.className = "btn-secondary";
+        return;
+      }
       stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
       cameraViewEl.srcObject = stream;
       cameraContainerEl.classList.remove("hidden");
@@ -253,6 +260,8 @@
         motionStatusEl.textContent = "Camera or motion permission denied. Use manual entry.";
       } else if (error && error.name === "NotFoundError") {
         motionStatusEl.textContent = "No camera found on this device. Use manual entry.";
+      } else if (error && error.name === "NotSupportedError") {
+        motionStatusEl.textContent = "Camera capture is not supported by this browser. Use manual entry.";
       } else {
         motionStatusEl.textContent = "Could not start automatic capture. Use manual entry.";
       }
@@ -310,7 +319,7 @@
     const tanTop = Math.tan(toRadians(top));
     mathBreakdownEl.textContent = [
       "Formula:",
-      "H = d × (tan(θtop) − tan(θbase))",
+      "H = d * (tan(theta_top) - tan(theta_base))",
       "",
       `d = ${distance.toFixed(2)} m`,
       `θbase = ${base.toFixed(2)}° (${toRadians(base).toFixed(4)} rad)`,
@@ -318,7 +327,7 @@
       `tan(θbase) = ${tanBase.toFixed(6)}`,
       `tan(θtop) = ${tanTop.toFixed(6)}`,
       "",
-      `H = ${distance.toFixed(2)} × (${tanTop.toFixed(6)} − ${tanBase.toFixed(6)})`,
+      `H = ${distance.toFixed(2)} * (${tanTop.toFixed(6)} - ${tanBase.toFixed(6)})`,
       `H = ${height.toFixed(2)} m`
     ].join("\n");
   }
@@ -366,7 +375,7 @@
   document.getElementById("reset").addEventListener("click", resetAll);
   helpBtn.addEventListener("click", () => {
     if (!hasCalculation) {
-      mathBreakdownEl.textContent = "Press Calculate to generate the full maths breakdown.";
+      mathBreakdownEl.textContent = "Press Calculate to generate the full math breakdown.";
     }
     mathBreakdownEl.classList.toggle("hidden");
     document.getElementById("mathBreakdownTitle").classList.toggle("hidden");
