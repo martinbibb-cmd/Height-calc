@@ -19,7 +19,7 @@ Open `index.html` in a browser.
 1. Enter distance to building (metres, m)
 2. Choose angle entry mode:
    - **Manual entry**: type base and target/top angles directly
-   - **Automatic camera**: open camera live view, aim using overlay crosshairs + green horizon line, then store base and target
+   - **Automatic camera**: open a fullscreen camera view, aim using overlay crosshairs + green horizon line (which stays level and moves up/down with pitch), then store base and target
 3. Press **Calculate** to close camera view and show height from base in metres
 4. Use **Reset** to start from scratch
 5. Use **?** to show/hide the full maths breakdown for the current result
