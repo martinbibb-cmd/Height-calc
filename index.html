@@ -31,7 +31,7 @@
     <h2>1) Enter distance</h2>
     <label for="distance">Distance to base of wall (m)</label>
     <input id="distance" type="number" min="0" step="0.01" placeholder="e.g. 9.5" />
-    <p class="muted">Use horizontal distance. Correct line-of-sight laser readings before entry.</p>
+    <p class="muted">Use horizontal distance. If your laser gives a sloped line-of-sight reading, convert to horizontal first.</p>
   </section>
 
   <section class="card">
@@ -78,6 +78,7 @@
   const HIGH_CONFIDENCE_ANGLE_GAP = 10;
   const MEDIUM_CONFIDENCE_ANGLE_GAP = 5;
   const MIN_RECOMMENDED_ANGLE_GAP = 2;
+  const SMALL_ANGLE_WARNING = "Very small angle separation detected; repeat measurement for better accuracy.";
 
   function updateLivePitch(value) {
     if (!Number.isFinite(value)) return;
@@ -151,7 +152,7 @@
     if (Number.isFinite(base) && Number.isFinite(top) && top <= base) warnings.push("Top angle must be greater than base angle.");
 
     const angleGap = top - base;
-    if (Number.isFinite(angleGap) && angleGap < MIN_RECOMMENDED_ANGLE_GAP) warnings.push("Very small angle separation detected; repeat measurement for better accuracy.");
+    if (Number.isFinite(angleGap) && angleGap < MIN_RECOMMENDED_ANGLE_GAP) warnings.push(SMALL_ANGLE_WARNING);
     notesEl.innerHTML = "";
     warnings.forEach((warning) => {
       const li = document.createElement("li");
