@@ -124,7 +124,7 @@
   const MEDIUM_CONFIDENCE_ANGLE_GAP = 5;
   const MIN_RECOMMENDED_ANGLE_GAP = 2;
   const SMALL_ANGLE_WARNING = "Very small angle separation detected; repeat measurement for better accuracy.";
-  const LEVEL_ROLL_TOLERANCE = 2;
+  const LEVEL_ROLL_TOLERANCE_DEGREES = 2;
 
   function updateLivePitch(value) {
     if (!Number.isFinite(value)) return;
@@ -135,11 +135,11 @@
   function updateScopeLevel(value) {
     if (!Number.isFinite(value)) return;
     const rollAbs = Math.abs(value);
-    const isLevel = rollAbs <= LEVEL_ROLL_TOLERANCE;
+    const isLevel = rollAbs <= LEVEL_ROLL_TOLERANCE_DEGREES;
     scopeReticleEl.classList.toggle("scope-level", isLevel);
 
     if (isLevel) {
-      scopeLevelEl.textContent = `Level (vertical) - roll ${value.toFixed(2)}°`;
+      scopeLevelEl.textContent = `Level (device upright) - roll ${value.toFixed(2)}°`;
       return;
     }
 
