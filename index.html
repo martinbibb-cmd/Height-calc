@@ -137,7 +137,8 @@
       <button id="help" class="btn-secondary" type="button">?</button>
     </div>
     <p class="result" id="heightResult">Height from base: —</p>
-    <p id="mathBreakdown" class="hidden"></p>
+    <h3 id="mathBreakdownTitle" class="hidden">Math breakdown</h3>
+    <p id="mathBreakdown" class="hidden" role="region" aria-labelledby="mathBreakdownTitle" aria-live="polite" aria-label="Detailed height calculation steps in plain language"></p>
     <ul id="notes"></ul>
   </section>
 </main>
@@ -357,11 +358,14 @@
       mathBreakdownEl.textContent = "Press Calculate to generate the full maths breakdown.";
     }
     mathBreakdownEl.classList.toggle("hidden");
+    document.getElementById("mathBreakdownTitle").classList.toggle("hidden");
   });
 
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
-      navigator.serviceWorker.register("./sw.js").catch(() => {});
+      navigator.serviceWorker.register("./sw.js").catch((error) => {
+        console.warn("Service worker registration failed:", error);
+      });
     });
   }
 </script>
