@@ -63,7 +63,7 @@
       opacity: 0.9;
     }
     .scope-line-v { width: 2px; top: 18px; bottom: 18px; left: 50%; transform: translateX(-50%); }
-    .scope-line-h { height: 2px; left: 18px; right: 18px; top: 50%; transform: translateY(-50%); }
+    .scope-line-h { height: 2px; left: 18px; right: 18px; top: 50%; transform: translateY(-50%) rotate(var(--horizon-roll-deg, 0deg)); }
     .scope-dot {
       position: absolute;
       width: 10px;
@@ -187,6 +187,9 @@
   // Map roughly ±30° of pitch to half the viewport height for intuitive horizon travel.
   const HORIZON_REFERENCE_PITCH_DEGREES = 30;
   const MAX_HORIZON_ROLL_DEGREES = 45;
+  const ORIENTATION_QUARTER_TURN_DEGREES = 90;
+  const ORIENTATION_HALF_TURN_DEGREES = 180;
+  const ORIENTATION_THREE_QUARTER_TURN_DEGREES = 270;
 
   function updateLivePitch(value) {
     if (!Number.isFinite(value)) return;
@@ -220,7 +223,7 @@
     const offset = Math.max(-maxOffset, Math.min(maxOffset, -livePitch * pixelsPerDegree));
     const clampedRoll = Math.max(-MAX_HORIZON_ROLL_DEGREES, Math.min(MAX_HORIZON_ROLL_DEGREES, liveRoll));
     horizonLineEl.style.top = `calc(50% + ${offset.toFixed(2)}px)`;
-    horizonLineEl.style.transform = `translateY(-50%) rotate(${(-clampedRoll).toFixed(2)}deg)`;
+    horizonLineEl.style.setProperty("--horizon-roll-deg", `${(-clampedRoll).toFixed(2)}deg`);
   }
 
   function scheduleHorizonLineSync() {
@@ -244,12 +247,12 @@
       ? screen.orientation.angle
       : (typeof window.orientation === "number" ? window.orientation : 0);
     const normalized = ((orientationAngle % 360) + 360) % 360;
-    if (normalized === 90) return gamma;
-    if (normalized === 270) return -gamma;
+    if (normalized === ORIENTATION_QUARTER_TURN_DEGREES) return gamma;
+    if (normalized === ORIENTATION_THREE_QUARTER_TURN_DEGREES) return -gamma;
     // In portrait, beta is typically ~90° when the camera is level with the horizon,
     // so subtract 90° to make 0° represent "level" for horizon centering.
-    if (normalized === 180) return -beta - 90;
-    return beta - 90;
+    if (normalized === ORIENTATION_HALF_TURN_DEGREES) return -beta - ORIENTATION_QUARTER_TURN_DEGREES;
+    return beta - ORIENTATION_QUARTER_TURN_DEGREES;
   }
 
   function getCameraRoll(event) {
@@ -261,9 +264,9 @@
       ? screen.orientation.angle
       : (typeof window.orientation === "number" ? window.orientation : 0);
     const normalized = ((orientationAngle % 360) + 360) % 360;
-    if (normalized === 90) return Number.isFinite(beta) ? (beta - 90) : NaN;
-    if (normalized === 270) return Number.isFinite(beta) ? (-beta - 90) : NaN;
-    if (normalized === 180) return -gamma;
+    if (normalized === ORIENTATION_QUARTER_TURN_DEGREES) return Number.isFinite(beta) ? (beta - ORIENTATION_QUARTER_TURN_DEGREES) : NaN;
+    if (normalized === ORIENTATION_THREE_QUARTER_TURN_DEGREES) return Number.isFinite(beta) ? (-beta - ORIENTATION_QUARTER_TURN_DEGREES) : NaN;
+    if (normalized === ORIENTATION_HALF_TURN_DEGREES) return -gamma;
     return gamma;
   }
 
