@@ -36,7 +36,7 @@
 
   <section class="card">
     <h2>2) Capture base and top angles</h2>
-    <p class="muted">Aim the device crosshair at the wall base and apex, then capture each angle. Manual edit remains available.</p>
+    <p class="muted">Aim the device crosshair at the wall base and top, then capture each angle. Manual edit remains available.</p>
     <div class="crosshair">＋</div>
     <p><strong>Live pitch:</strong> <span id="livePitch">0.00°</span></p>
     <div class="row">
@@ -72,6 +72,9 @@
   const notesEl = document.getElementById("notes");
 
   let livePitch = 0;
+  const HIGH_CONFIDENCE_ANGLE_GAP = 10;
+  const MEDIUM_CONFIDENCE_ANGLE_GAP = 5;
+  const MIN_RECOMMENDED_ANGLE_GAP = 2;
 
   function updateLivePitch(value) {
     if (!Number.isFinite(value)) return;
@@ -80,7 +83,7 @@
   }
 
   window.addEventListener("deviceorientation", (event) => {
-    if (event.beta == null) return;
+    if (event.beta === null || event.beta === undefined) return;
     updateLivePitch(event.beta);
   });
 
@@ -97,8 +100,8 @@
   }
 
   function confidenceFor(distance, angleGap) {
-    if (distance > 0 && angleGap >= 10) return "High";
-    if (distance > 0 && angleGap >= 5) return "Medium";
+    if (distance > 0 && angleGap >= HIGH_CONFIDENCE_ANGLE_GAP) return "High";
+    if (distance > 0 && angleGap >= MEDIUM_CONFIDENCE_ANGLE_GAP) return "Medium";
     return "Low";
   }
 
@@ -113,7 +116,7 @@
     if (Number.isFinite(base) && Number.isFinite(top) && top <= base) warnings.push("Top angle must be greater than base angle.");
 
     const angleGap = top - base;
-    if (Number.isFinite(angleGap) && angleGap > 0 && angleGap < 2) warnings.push("Very small angle separation detected; repeat measurement for better accuracy.");
+    if (Number.isFinite(angleGap) && angleGap > 0 && angleGap < MIN_RECOMMENDED_ANGLE_GAP) warnings.push("Very small angle separation detected; repeat measurement for better accuracy.");
     notesEl.innerHTML = "";
     warnings.forEach((warning) => {
       const li = document.createElement("li");
