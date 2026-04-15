@@ -1,2 +1,24 @@
 # Height-calc
-a smart height calculator for flues and for building height to confirm if a metal flue is needed.
+
+A lightweight standalone **Building Height Check** app for estimating building height from:
+
+- manual distance input (distance to wall base)
+- captured base angle
+- captured top angle
+
+Core formula:
+
+`H = d * (tan(theta_top) - tan(theta_base))`
+
+## Run
+
+Open `/home/runner/work/Height-calc/Height-calc/index.html` in a browser.
+
+## Workflow
+
+1. Enter distance to base of wall (metres)
+2. Capture base angle
+3. Capture top angle
+4. Calculate estimated height
+
+Includes validation and confidence guidance.

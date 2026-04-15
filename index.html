@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Building Height Check</title>
+  <style>
+    :root { font-family: Arial, sans-serif; color-scheme: light dark; }
+    body { margin: 0; background: #101828; color: #e5e7eb; }
+    main { max-width: 740px; margin: 0 auto; padding: 24px; }
+    .card { background: #1f2937; border: 1px solid #374151; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+    h1, h2 { margin-top: 0; }
+    label { display: block; font-weight: 700; margin: 10px 0 6px; }
+    input { width: 100%; box-sizing: border-box; padding: 10px; border-radius: 8px; border: 1px solid #4b5563; background: #111827; color: #f9fafb; }
+    button { margin-top: 10px; padding: 10px 14px; border: 0; border-radius: 8px; font-weight: 700; cursor: pointer; }
+    .btn-primary { background: #22c55e; color: #06280e; }
+    .btn-secondary { background: #60a5fa; color: #0b1d3b; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .crosshair { height: 120px; border-radius: 12px; border: 1px dashed #6b7280; display: grid; place-items: center; font-size: 24px; margin-top: 10px; }
+    .result { font-size: 1.25rem; font-weight: 700; }
+    .muted { color: #9ca3af; }
+    ul { margin-bottom: 0; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Building Height Check</h1>
+  <p class="muted">Estimate building height from manual laser distance and captured device pitch.</p>
+
+  <section class="card">
+    <h2>1) Enter distance</h2>
+    <label for="distance">Distance to base of wall (m)</label>
+    <input id="distance" type="number" min="0" step="0.01" placeholder="e.g. 9.5" />
+  </section>
+
+  <section class="card">
+    <h2>2) Capture base and top angles</h2>
+    <p class="muted">Aim the device crosshair at the wall base and apex, then capture each angle. Manual edit remains available.</p>
+    <div class="crosshair">＋</div>
+    <p><strong>Live pitch:</strong> <span id="livePitch">0.00°</span></p>
+    <div class="row">
+      <div>
+        <label for="baseAngle">Base angle (°)</label>
+        <input id="baseAngle" type="number" step="0.01" />
+        <button id="captureBase" class="btn-secondary" type="button">Capture base angle</button>
+      </div>
+      <div>
+        <label for="topAngle">Top angle (°)</label>
+        <input id="topAngle" type="number" step="0.01" />
+        <button id="captureTop" class="btn-secondary" type="button">Capture top angle</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>3) Calculate</h2>
+    <button id="calculate" class="btn-primary" type="button">Calculate estimated height</button>
+    <p class="result" id="heightResult">Estimated height: —</p>
+    <p id="confidenceResult">Confidence: —</p>
+    <ul id="notes"></ul>
+  </section>
+</main>
+
+<script>
+  const livePitchEl = document.getElementById("livePitch");
+  const baseAngleEl = document.getElementById("baseAngle");
+  const topAngleEl = document.getElementById("topAngle");
+  const distanceEl = document.getElementById("distance");
+  const heightResultEl = document.getElementById("heightResult");
+  const confidenceResultEl = document.getElementById("confidenceResult");
+  const notesEl = document.getElementById("notes");
+
+  let livePitch = 0;
+
+  function updateLivePitch(value) {
+    if (!Number.isFinite(value)) return;
+    livePitch = value;
+    livePitchEl.textContent = `${value.toFixed(2)}°`;
+  }
+
+  window.addEventListener("deviceorientation", (event) => {
+    if (event.beta == null) return;
+    updateLivePitch(event.beta);
+  });
+
+  document.getElementById("captureBase").addEventListener("click", () => {
+    baseAngleEl.value = livePitch.toFixed(2);
+  });
+
+  document.getElementById("captureTop").addEventListener("click", () => {
+    topAngleEl.value = livePitch.toFixed(2);
+  });
+
+  function toRadians(degrees) {
+    return (degrees * Math.PI) / 180;
+  }
+
+  function confidenceFor(distance, angleGap) {
+    if (distance > 0 && angleGap >= 10) return "High";
+    if (distance > 0 && angleGap >= 5) return "Medium";
+    return "Low";
+  }
+
+  document.getElementById("calculate").addEventListener("click", () => {
+    const distance = Number(distanceEl.value);
+    const base = Number(baseAngleEl.value);
+    const top = Number(topAngleEl.value);
+    const warnings = [];
+
+    if (!(distance > 0)) warnings.push("Distance must be greater than 0.");
+    if (!Number.isFinite(base) || !Number.isFinite(top)) warnings.push("Base and top angles are required.");
+    if (Number.isFinite(base) && Number.isFinite(top) && top <= base) warnings.push("Top angle must be greater than base angle.");
+
+    const angleGap = top - base;
+    if (Number.isFinite(angleGap) && angleGap > 0 && angleGap < 2) warnings.push("Very small angle separation detected; repeat measurement for better accuracy.");
+    warnings.push("Laser line-of-sight distance can reduce accuracy unless corrected to horizontal distance.");
+
+    notesEl.innerHTML = "";
+    warnings.forEach((warning) => {
+      const li = document.createElement("li");
+      li.textContent = warning;
+      notesEl.appendChild(li);
+    });
+
+    if (warnings.some((w) => w !== "Laser line-of-sight distance can reduce accuracy unless corrected to horizontal distance.")) {
+      heightResultEl.textContent = "Estimated height: —";
+      confidenceResultEl.textContent = "Confidence: —";
+      return;
+    }
+
+    const height = distance * (Math.tan(toRadians(top)) - Math.tan(toRadians(base)));
+    heightResultEl.textContent = `Estimated height: ${height.toFixed(2)} m`;
+    confidenceResultEl.textContent = `Confidence: ${confidenceFor(distance, angleGap)} (${distance.toFixed(2)}m, base ${base.toFixed(2)}°, top ${top.toFixed(2)}°)`;
+  });
+</script>
+</body>
+</html>
