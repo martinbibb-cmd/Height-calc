@@ -87,7 +87,7 @@
     }
     .level-indicator.level-ok {
       background: #22c55e;
-      color: #000000;
+      color: #064e3b;
     }
     .camera-controls {
       position: absolute;
@@ -330,7 +330,7 @@
       cameraViewEl.srcObject = stream;
       cameraContainerEl.classList.remove("hidden");
       cameraContainerEl.classList.add("fullscreen");
-      motionStatusEl.textContent = "Automatic mode active. Keep roll near 0° (Level) and store base/target pitch.";
+      motionStatusEl.textContent = "Automatic mode active. Keep roll near 0° (level) and store base/target pitch.";
     } catch (error) {
       if (error && error.name === "NotAllowedError") {
         motionStatusEl.textContent = "Camera or motion permission denied. Use manual entry.";
