@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Building Height Check</title>
+  <style>
+    :root { font-family: Arial, sans-serif; color-scheme: light dark; }
+    body { margin: 0; background: #101828; color: #e5e7eb; }
+    main { max-width: 740px; margin: 0 auto; padding: 24px; }
+    .card { background: #1f2937; border: 1px solid #374151; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+    h1, h2 { margin-top: 0; }
+    label { display: block; font-weight: 700; margin: 10px 0 6px; }
+    input { width: 100%; box-sizing: border-box; padding: 10px; border-radius: 8px; border: 1px solid #4b5563; background: #111827; color: #f9fafb; }
+    button { margin-top: 10px; padding: 10px 14px; border: 0; border-radius: 8px; font-weight: 700; cursor: pointer; }
+    .btn-primary { background: #22c55e; color: #06280e; }
+    .btn-secondary { background: #60a5fa; color: #0b1d3b; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .crosshair { height: 120px; border-radius: 12px; border: 1px dashed #6b7280; display: grid; place-items: center; font-size: 24px; margin-top: 10px; }
+    .result { font-size: 1.25rem; font-weight: 700; }
+    .muted { color: #9ca3af; }
+    ul { margin-bottom: 0; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Building Height Check</h1>
+  <p class="muted">Estimate building height from manual laser distance and captured device pitch.</p>
+
+  <section class="card">
+    <h2>1) Enter distance</h2>
+    <label for="distance">Distance to base of wall (m)</label>
+    <input id="distance" type="number" min="0" step="0.01" placeholder="e.g. 9.5" />
+    <p class="muted">Use horizontal distance. If your laser gives a sloped line-of-sight reading, convert to horizontal first.</p>
+  </section>
+
+  <section class="card">
+    <h2>2) Capture base and top angles</h2>
+    <p class="muted">Aim the device crosshair at the wall base and top, then capture each angle. Manual edit remains available.</p>
+    <button id="enableMotion" class="btn-secondary" type="button">Enable angle capture</button>
+    <p class="muted" id="motionStatus">Motion capture not enabled yet. You can still type angles manually.</p>
+    <div class="crosshair">＋</div>
+    <p><strong>Live pitch:</strong> <span id="livePitch">0.00°</span></p>
+    <div class="row">
+      <div>
+        <label for="baseAngle">Base angle (°)</label>
+        <input id="baseAngle" type="number" step="0.01" />
+        <button id="captureBase" class="btn-secondary" type="button">Capture base angle</button>
+      </div>
+      <div>
+        <label for="topAngle">Top angle (°)</label>
+        <input id="topAngle" type="number" step="0.01" />
+        <button id="captureTop" class="btn-secondary" type="button">Capture top angle</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>3) Calculate</h2>
+    <button id="calculate" class="btn-primary" type="button">Calculate estimated height</button>
+    <p class="result" id="heightResult">Estimated height: —</p>
+    <p id="confidenceResult">Confidence: —</p>
+    <ul id="notes"></ul>
+  </section>
+</main>
+
+<script>
+  const livePitchEl = document.getElementById("livePitch");
+  const baseAngleEl = document.getElementById("baseAngle");
+  const topAngleEl = document.getElementById("topAngle");
+  const distanceEl = document.getElementById("distance");
+  const motionStatusEl = document.getElementById("motionStatus");
+  const heightResultEl = document.getElementById("heightResult");
+  const confidenceResultEl = document.getElementById("confidenceResult");
+  const notesEl = document.getElementById("notes");
+
+  let livePitch = 0;
+  const HIGH_CONFIDENCE_ANGLE_GAP = 10;
+  const MEDIUM_CONFIDENCE_ANGLE_GAP = 5;
+  const MIN_RECOMMENDED_ANGLE_GAP = 2;
+  const SMALL_ANGLE_WARNING = "Very small angle separation detected; repeat measurement for better accuracy.";
+
+  function updateLivePitch(value) {
+    if (!Number.isFinite(value)) return;
+    livePitch = value;
+    livePitchEl.textContent = `${value.toFixed(2)}°`;
+  }
+
+  function handleDeviceOrientation(event) {
+    if (event.beta === null || event.beta === undefined) return;
+    updateLivePitch(event.beta);
+  }
+
+  async function enableMotionCapture() {
+    if (typeof window.DeviceOrientationEvent === "undefined") {
+      motionStatusEl.textContent = "Device orientation is not supported on this device/browser. Enter angles manually.";
+      return;
+    }
+
+    if (typeof DeviceOrientationEvent.requestPermission === "function") {
+      const permission = await DeviceOrientationEvent.requestPermission();
+      if (permission !== "granted") {
+        motionStatusEl.textContent = "Motion permission denied. Enter angles manually.";
+        return;
+      }
+    }
+
+    window.addEventListener("deviceorientation", handleDeviceOrientation);
+    motionStatusEl.textContent = "Motion capture enabled.";
+  }
+
+  document.getElementById("enableMotion").addEventListener("click", () => {
+    enableMotionCapture().catch(() => {
+      motionStatusEl.textContent = "Could not enable motion capture. Enter angles manually.";
+    });
+  });
+
+  document.getElementById("captureBase").addEventListener("click", () => {
+    baseAngleEl.value = livePitch.toFixed(2);
+  });
+
+  document.getElementById("captureTop").addEventListener("click", () => {
+    topAngleEl.value = livePitch.toFixed(2);
+  });
+
+  function toRadians(degrees) {
+    return (degrees * Math.PI) / 180;
+  }
+
+  function calculateHeight(distance, baseAngle, topAngle) {
+    return distance * (Math.tan(toRadians(topAngle)) - Math.tan(toRadians(baseAngle)));
+  }
+
+  function confidenceFor(distance, angleGap) {
+    if (!(distance > 0)) return "Low";
+    let confidence = "Low";
+    if (angleGap >= HIGH_CONFIDENCE_ANGLE_GAP) confidence = "High";
+    else if (angleGap >= MEDIUM_CONFIDENCE_ANGLE_GAP) confidence = "Medium";
+    if (distance > 25) return "Low";
+    if (distance > 15 && confidence === "High") return "Medium";
+    return confidence;
+  }
+
+  document.getElementById("calculate").addEventListener("click", () => {
+    const distance = Number(distanceEl.value);
+    const base = Number(baseAngleEl.value);
+    const top = Number(topAngleEl.value);
+    const warnings = [];
+
+    if (!(distance > 0)) warnings.push("Distance must be greater than 0.");
+    if (!Number.isFinite(base) || !Number.isFinite(top)) warnings.push("Please enter valid base and top angles.");
+    if (Number.isFinite(base) && Number.isFinite(top) && top <= base) warnings.push("Top angle must be greater than base angle.");
+
+    const angleGap = top - base;
+    if (Number.isFinite(angleGap) && angleGap < MIN_RECOMMENDED_ANGLE_GAP) warnings.push(SMALL_ANGLE_WARNING);
+    notesEl.innerHTML = "";
+    warnings.forEach((warning) => {
+      const li = document.createElement("li");
+      li.textContent = warning;
+      notesEl.appendChild(li);
+    });
+
+    const hasBlockingValidationError = !(distance > 0)
+      || !Number.isFinite(base)
+      || !Number.isFinite(top)
+      || top <= base;
+
+    if (hasBlockingValidationError) {
+      heightResultEl.textContent = "Estimated height: —";
+      confidenceResultEl.textContent = "Confidence: —";
+      return;
+    }
+
+    const height = calculateHeight(distance, base, top);
+    heightResultEl.textContent = `Estimated height: ${height.toFixed(2)} m`;
+    confidenceResultEl.textContent = `Confidence: ${confidenceFor(distance, angleGap)} (Distance: ${distance.toFixed(2)} m | Base: ${base.toFixed(2)}° | Top: ${top.toFixed(2)}°)`;
+  });
+</script>
+</body>
+</html>
