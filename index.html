@@ -73,7 +73,7 @@
 
   <section class="card">
     <h2>2) Capture base and top angles</h2>
-    <p class="muted">Aim the device crosshair at the wall base and top, then capture each angle. Manual edit remains available.</p>
+    <p class="muted">Aim the device scope reticle at the wall base and top, then capture each angle. Manual edit remains available.</p>
     <button id="enableMotion" class="btn-secondary" type="button">Enable angle capture</button>
     <p class="muted" id="motionStatus">Motion capture not enabled yet. You can still type angles manually.</p>
     <div class="scope" id="scopeReticle" aria-label="Camera scope reticle">
@@ -143,8 +143,7 @@
       return;
     }
 
-    const direction = value > 0 ? "right" : "left";
-    scopeLevelEl.textContent = `Tilt ${direction} by ${rollAbs.toFixed(2)}° (keep screen vertical for level)`;
+    scopeLevelEl.textContent = `Off-level by ${rollAbs.toFixed(2)}° (keep screen vertical for level)`;
   }
 
   function handleDeviceOrientation(event) {
