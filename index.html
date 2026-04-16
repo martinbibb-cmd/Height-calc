@@ -167,6 +167,8 @@
       <button id="help" class="btn-secondary" type="button">?</button>
     </div>
     <p class="result" id="heightResult">Height from base: —</p>
+    <p class="result" id="ladderLengthResult">Ladder length (1:4): —</p>
+    <p class="result" id="ladderDistResult">Distance from wall (1:4): —</p>
     <h3 id="mathBreakdownTitle" class="hidden">Math breakdown</h3>
     <p id="mathBreakdown" class="hidden" role="region" aria-labelledby="mathBreakdownTitle" aria-live="polite"></p>
     <ul id="notes"></ul>
@@ -184,6 +186,8 @@
   const distanceEl = document.getElementById("distance");
   const motionStatusEl = document.getElementById("motionStatus");
   const heightResultEl = document.getElementById("heightResult");
+  const ladderLengthResultEl = document.getElementById("ladderLengthResult");
+  const ladderDistResultEl = document.getElementById("ladderDistResult");
   const mathBreakdownEl = document.getElementById("mathBreakdown");
   const notesEl = document.getElementById("notes");
   const captureBaseBtn = document.getElementById("captureBase");
@@ -389,6 +393,8 @@
     setCapturedState(captureBaseBtn, false);
     setCapturedState(captureTopBtn, false);
     heightResultEl.textContent = "Height from base: —";
+    ladderLengthResultEl.textContent = "Ladder length (1:4): —";
+    ladderDistResultEl.textContent = "Distance from wall (1:4): —";
     notesEl.innerHTML = "";
     mathBreakdownEl.classList.add("hidden");
     mathBreakdownEl.textContent = "";
@@ -440,12 +446,18 @@
 
     if (hasBlockingValidationError) {
       heightResultEl.textContent = "Height from base: —";
+      ladderLengthResultEl.textContent = "Ladder length (1:4): —";
+      ladderDistResultEl.textContent = "Distance from wall (1:4): —";
       hasCalculation = false;
       return;
     }
 
     const height = calculateHeight(distance, base, top);
     heightResultEl.textContent = `Height from base: ${height.toFixed(2)} m`;
+    const ladderDist = height / 4;
+    const ladderLength = Math.sqrt(height * height + ladderDist * ladderDist);
+    ladderDistResultEl.textContent = `Distance from wall (1:4): ${ladderDist.toFixed(2)} m`;
+    ladderLengthResultEl.textContent = `Ladder length (1:4): ${ladderLength.toFixed(2)} m`;
     renderMathBreakdown(distance, base, top, height);
     hasCalculation = true;
     if (captureMode === "automatic") {
